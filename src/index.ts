@@ -3,35 +3,54 @@ import React from "react";
 /**
  * React hook that wraps a fetch request to a JSON based HTTP service.
  * @param service Service descriptor object. Resembles Fetch API's RequestInit but should not contain a body.
- * @param callback Synchronous callback to execute on the response JSON body.
- * @typedef T The request body object
- * @typedef U The response body object on success
- * @typedef V The response body object on error
+ * @typedef T The request body type
+ * @typedef U The response body type expected on success
+ * @typedef V The response body type expected on error
  * @returns Array containing an object that tracks the request state [0] and the function that wraps the fetch call [1]
+ * @throws FetchError if response is not valid JSON
  */
 export default function useHttpService<T, U, V>(
-  service: Service,
-  callback?: (data: U) => void
-): [RequestState<U, V>, (requestBody: T) => void] {
+  service: Service
+): [RequestState<U, V>, (requestBody?: T) => Promise<Result<U, V>>] {
   const [requestState, setRequestState] = useRequestState<U, V>();
 
-  const callService = (requestBody: T) => {
+  const callService = async (requestBody?: T) => {
     const { url, ...serviceInfo } = service;
-    fetch(url, { ...serviceInfo, body: JSON.stringify(requestBody) })
-      .then(handleResponse)
-      .then(handleData)
-      .catch(handleError)
-      .finally(cleanup);
+
+    const res = await fetch(url, {
+      ...serviceInfo,
+      headers: {
+        ...serviceInfo.headers,
+        Accept: "application/json",
+      },
+      body: requestBody ? JSON.stringify(requestBody) : undefined,
+    });
+
+    let out: Result<U, V>;
+    try {
+      out = {
+        isOk: true,
+        data: await handleResponse(res),
+      };
+    } catch (e) {
+      out = {
+        isOk: false,
+        error: await handleError(e),
+      };
+    } finally {
+      cleanup();
+    }
+
+    return out;
   };
 
   return [requestState, callService];
 
-  function handleResponse(res: Response) {
+  async function handleResponse(res: Response): Promise<U> {
     if (!res.ok) throw new ServiceRequestError(res);
-    return res.json();
-  }
 
-  function handleData(data: U) {
+    const data: U = await res.json();
+
     setRequestState({
       ...requestState,
       isPending: false,
@@ -39,30 +58,27 @@ export default function useHttpService<T, U, V>(
       data,
     });
 
-    try {
-      if (callback) callback(data);
-    } catch (e) {
-      throw new ServiceCallbackError(e);
-    }
+    return data;
   }
 
-  function handleError(err: Error) {
-    if (err instanceof ServiceCallbackError) throw err.exc;
+  async function handleError(err: Error): Promise<V> {
+    if (err instanceof ServiceRequestError) {
+      const data: V = await err.res.json();
 
-    if (err instanceof ServiceRequestError)
-      err.res.json().then((data: V) =>
-        setRequestState({
-          ...requestState,
-          isPending: false,
-          isSuccess: false,
-          error: data,
-        })
-      );
+      setRequestState({
+        ...requestState,
+        isPending: false,
+        isSuccess: false,
+        error: data,
+      });
+
+      return data;
+    }
 
     throw err;
   }
 
-  function cleanup() {
+  function cleanup(): void {
     setRequestState({
       ...requestState,
       isPending: false,
@@ -79,11 +95,11 @@ function useRequestState<T, U>(): [
   const [data, setData] = React.useState<T>();
   const [error, setError] = React.useState<U>();
 
-  const setRequestState = (data: RequestState<T, U>) => {
-    if (data.isPending) setIsPending(data.isPending);
-    if (data.isSuccess) setIsSuccess(data.isSuccess);
-    if (data.data) setData(data.data);
-    if (data.error) setError(data.error);
+  const setRequestState = (newState: RequestState<T, U>) => {
+    if (newState.isPending !== isPending) setIsPending(newState.isPending);
+    if (newState.isSuccess !== isSuccess) setIsSuccess(newState.isSuccess);
+    if (newState.data !== data) setData(newState.data);
+    if (newState.error !== error) setError(newState.error);
   };
 
   return [{ isPending, isSuccess, data, error }, setRequestState];
@@ -97,15 +113,7 @@ class ServiceRequestError extends Error {
   }
 }
 
-class ServiceCallbackError extends Error {
-  exc: Error;
-  constructor(exc: Error) {
-    super(`Request callback has failed with error: ${exc.name}`);
-    this.exc = exc;
-  }
-}
-
-type Service = {
+export type Service = {
   /**
    * Service URL.
    */
@@ -121,7 +129,7 @@ type Service = {
   /**
    * Object containing header values.
    */
-  headers?: { [k: string]: string };
+  headers?: { [name: string]: string };
   /**
    * A boolean indicating request's keepalive value.
    */
@@ -136,7 +144,7 @@ type Service = {
   redirect?: "error" | "follow" | "manual";
 };
 
-type RequestState<T, U> = {
+export type RequestState<T, U> = {
   /**
    * A boolean indicating whether the request is still pending.
    */
@@ -153,4 +161,16 @@ type RequestState<T, U> = {
    * The JSON object contained in the response.
    */
   data?: T;
+};
+
+export type Result<T, E> = SuccessResult<T> | ErrorResult<E>;
+
+export type SuccessResult<T> = {
+  isOk: true;
+  data: T;
+};
+
+export type ErrorResult<E> = {
+  isOk: false;
+  error: E;
 };
