@@ -7,23 +7,21 @@ import React from "react";
  * @typedef U The response body type expected on success
  * @typedef V The response body type expected on error
  * @returns Array containing an object that tracks the request state [0] and the function that wraps the fetch call [1]
- * @throws FetchError if response is not valid JSON
  */
 export default function useHttpService<T, U, V>(
   service: Service
 ): [RequestState<U, V>, (requestBody?: T) => Promise<Result<U, V>>] {
   const [requestState, setRequestState] = useRequestState<U, V>();
+  const { url, ...serviceInfo } = service;
 
-  const callService = async (requestBody?: T) => {
-    const { url, ...serviceInfo } = service;
+  async function callService(requestBody?: T): Promise<Result<U, V>> {
+    const headers = buildHeaders(serviceInfo.headers);
+    const body = buildBody(requestBody);
 
     const res = await fetch(url, {
       ...serviceInfo,
-      headers: {
-        ...serviceInfo.headers,
-        Accept: "application/json",
-      },
-      body: requestBody ? JSON.stringify(requestBody) : undefined,
+      headers,
+      body,
     });
 
     let out: Result<U, V>;
@@ -42,7 +40,7 @@ export default function useHttpService<T, U, V>(
     }
 
     return out;
-  };
+  }
 
   return [requestState, callService];
 
@@ -83,6 +81,21 @@ export default function useHttpService<T, U, V>(
       ...requestState,
       isPending: false,
     });
+  }
+
+  function buildHeaders(headers?: { [name: string]: string }): Headers {
+    const out = new Headers();
+
+    if (!!headers)
+      for (let name of Object.keys(headers)) out.append(name, headers[name]);
+
+    out.set("Content-Type", "application/json");
+    out.set("Accept", "application/json");
+    return out;
+  }
+
+  function buildBody(body?: T): string | undefined {
+    return !!body ? JSON.stringify(body) : undefined;
   }
 }
 
