@@ -1,5 +1,7 @@
 # use-http-service
 
+[![Build Status](https://travis-ci.com/marinoandrea/use-http-service.svg?token=oQZSVvHp9LbB8M8icK4Z&branch=main)](https://travis-ci.com/marinoandrea/use-http-service)
+
 Minimal React hook that wraps a fetch request to a JSON HTTP service.
 
 ## Installation
