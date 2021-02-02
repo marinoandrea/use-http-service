@@ -16,7 +16,7 @@
     "dev": "tsc -w",
     "build": "tsc",
     "prepublish": "tsc",
-    "test": "jest --detectOpenHandles"
+    "test": "jest"
   },
   "author": {
     "name": "Andrea Marino",
