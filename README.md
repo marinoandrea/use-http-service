@@ -8,11 +8,15 @@ Minimal React hook that wraps a fetch request to a JSON HTTP service.
 
 Using npm:
 
-`npm i @marinoandrea/use-http-service --save`
+```
+npm i @marinoandrea/use-http-service --save
+```
 
 Using yarn:
 
-`yarn add @marinoandrea/use-http-service`
+```
+yarn add @marinoandrea/use-http-service
+```
 
 ## Usage
 
