@@ -29,7 +29,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "react": "^17.0.1"
+    "react": ">=16.8.0"
   },
   "devDependencies": {
     "@testing-library/react": "^11.2.3",
