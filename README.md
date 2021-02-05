@@ -20,6 +20,12 @@ yarn add use-http-service
 
 ## Usage
 
+You can import the hook as follows:
+
+```typescript
+import useHttpService from "use-http-service";
+```
+
 The hook has to be called inside the body of a React functional component:
 
 ```typescript
@@ -38,6 +44,24 @@ const [requestState, callApi] = useHttpService({
     // set to `application/json`
   },
 });
+```
+
+The `callApi` function is an async function that takes the body of your request (if needed) as an argument and returns a `Result` object:
+
+```typescript
+const handleApiRequest = async (body) => {
+  const res = await callApi(body);
+
+  if (res.isOk) {
+    const { data } = res;
+    // use response body
+    // ...
+  } else {
+    const { error } = res;
+    // use error response body
+    // ...
+  }
+};
 ```
 
 ## Examples
