@@ -28,7 +28,8 @@
     "email": "am.marinoandrea@gmail.com"
   },
   "license": "ISC",
-  "dependencies": {
+  "dependencies": {},
+  "peerDependencies": {
     "react": ">=16.8.0"
   },
   "devDependencies": {
