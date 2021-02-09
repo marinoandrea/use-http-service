@@ -15,6 +15,11 @@ export default function useHttpService<T, U, V>(
   const { url, ...serviceInfo } = service;
 
   async function callService(requestBody?: T): Promise<Result<U, V>> {
+    setRequestState({
+      ...requestState,
+      isPending: true,
+    });
+
     const headers = buildHeaders(serviceInfo.headers);
     const body = buildBody(requestBody);
 
