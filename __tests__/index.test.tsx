@@ -19,6 +19,11 @@ type FailureResponse = {
 
 const SERVER_PORT = 3000;
 const API_ENDPOINT = `http://localhost:${SERVER_PORT}`;
+const TIMER_PERIOD = 200;
+
+function sleep(period: number) {
+  return new Promise((resolve) => setTimeout(resolve, period));
+}
 
 let app: express.Express;
 let serverInstance: http.Server;
@@ -33,6 +38,17 @@ function initServer() {
   );
 
   app.get("/not-a-json-endpoint", (_, res) => res.send("not json"));
+
+  app.get("/timed-endpoint", (_, res) => {
+    setTimeout(() => res.status(200).send({ msg: "success!" }), TIMER_PERIOD);
+  });
+
+  app.get("/timed-unauthorized-endpoint", (_, res) => {
+    setTimeout(
+      () => res.status(401).send({ errorMsg: "error!" }),
+      TIMER_PERIOD
+    );
+  });
 
   serverInstance = app.listen(SERVER_PORT);
 }
@@ -124,11 +140,20 @@ test("Component displays success response body correctly.", async () => {
 
   const instance = component!.root;
 
-  const button = instance.findByType("button");
-  await act(async () => await button.props.onClick());
+  function clickButton() {
+    const button = instance.findByType("button");
+    button.props.onClick();
+  }
 
-  const testDiv = instance!.findByType("div");
-  expect(testDiv.children[0]).toBe("success!");
+  act(() => clickButton());
+
+  expect(instance!.findByType("div").children[0]).toBe("Loading...");
+
+  await act(async () => {
+    await sleep(TIMER_PERIOD + 100);
+  });
+
+  expect(instance!.findByType("div").children[0]).toBe("success!");
 });
 
 test("Component displays failure response body correctly.", async () => {
@@ -139,11 +164,20 @@ test("Component displays failure response body correctly.", async () => {
 
   const instance = component!.root;
 
-  const button = instance.findByType("button");
-  await act(async () => await button.props.onClick());
+  function clickButton() {
+    const button = instance.findByType("button");
+    button.props.onClick();
+  }
 
-  const testDiv = instance!.findByType("div");
-  expect(testDiv.children[0]).toBe("error!");
+  act(() => clickButton());
+
+  expect(instance!.findByType("div").children[0]).toBe("Loading...");
+
+  await act(async () => {
+    await sleep(TIMER_PERIOD + 100);
+  });
+
+  expect(instance!.findByType("div").children[0]).toBe("error!");
 });
 
 const TestComponent: React.FC<{ failure?: boolean }> = ({
@@ -154,7 +188,9 @@ const TestComponent: React.FC<{ failure?: boolean }> = ({
     SuccessResponse,
     FailureResponse
   >({
-    url: `${API_ENDPOINT}/${failure ? "not-authorized-endpoint" : "example"}`,
+    url: `${API_ENDPOINT}/${
+      failure ? "timed-unauthorized-endpoint" : "timed-endpoint"
+    }`,
   });
 
   const handleClick = async () => await callApi();

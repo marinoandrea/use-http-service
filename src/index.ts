@@ -15,10 +15,7 @@ export default function useHttpService<T, U, V>(
   const { url, ...serviceInfo } = service;
 
   async function callService(requestBody?: T): Promise<Result<U, V>> {
-    setRequestState({
-      ...requestState,
-      isPending: true,
-    });
+    init();
 
     const headers = buildHeaders(serviceInfo.headers);
     const body = buildBody(requestBody);
@@ -49,13 +46,16 @@ export default function useHttpService<T, U, V>(
 
   return [requestState, callService];
 
+  function init(): void {
+    setRequestState({ isPending: true });
+  }
+
   async function handleResponse(res: Response): Promise<U> {
     if (!res.ok) throw new ServiceRequestError(res);
 
     const data: U = await res.json();
 
     setRequestState({
-      ...requestState,
       isPending: false,
       isSuccess: true,
       data,
@@ -69,7 +69,6 @@ export default function useHttpService<T, U, V>(
       const data: V = await err.res.json();
 
       setRequestState({
-        ...requestState,
         isPending: false,
         isSuccess: false,
         error: data,
@@ -82,10 +81,7 @@ export default function useHttpService<T, U, V>(
   }
 
   function cleanup(): void {
-    setRequestState({
-      ...requestState,
-      isPending: false,
-    });
+    setRequestState({ isPending: false });
   }
 
   function buildHeaders(headers?: { [name: string]: string }): Headers {
@@ -106,18 +102,18 @@ export default function useHttpService<T, U, V>(
 
 function useRequestState<T, U>(): [
   RequestState<T, U>,
-  (newState: RequestState<T, U>) => void
+  (newState: PartialRequestState<T, U>) => void
 ] {
   const [isPending, setIsPending] = React.useState<boolean>(false);
   const [isSuccess, setIsSuccess] = React.useState<boolean>(false);
   const [data, setData] = React.useState<T>();
   const [error, setError] = React.useState<U>();
 
-  const setRequestState = (newState: RequestState<T, U>) => {
-    if (newState.isPending !== isPending) setIsPending(newState.isPending);
-    if (newState.isSuccess !== isSuccess) setIsSuccess(newState.isSuccess);
-    if (newState.data !== data) setData(newState.data);
-    if (newState.error !== error) setError(newState.error);
+  const setRequestState = (newState: PartialRequestState<T, U>) => {
+    if (newState.isPending !== undefined) setIsPending(newState.isPending);
+    if (newState.isSuccess !== undefined) setIsSuccess(newState.isSuccess);
+    if (newState.data !== undefined) setData(newState.data);
+    if (newState.error !== undefined) setError(newState.error);
   };
 
   return [{ isPending, isSuccess, data, error }, setRequestState];
@@ -178,6 +174,13 @@ export type RequestState<T, U> = {
   /**
    * The JSON object contained in the response.
    */
+  data?: T;
+};
+
+type PartialRequestState<T, U> = {
+  isPending?: boolean;
+  isSuccess?: boolean;
+  error?: U;
   data?: T;
 };
 
