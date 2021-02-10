@@ -3,5 +3,8 @@ language: node_js
 node_js:
   - node
 
+script:
+  - npm install codecov -g
+
 after_success:
-  - bash <(curl -s https://codecov.io/bash)
+  - codecov --disable=gcov
