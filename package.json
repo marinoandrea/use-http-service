@@ -27,7 +27,7 @@
     "name": "Andrea Marino",
     "email": "am.marinoandrea@gmail.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "peerDependencies": {
     "react": ">=16.8.0"
   },
