@@ -3,8 +3,9 @@ language: node_js
 node_js:
   - node
 
-script:
-  - npm install codecov -g
+before_install:
+  - npm install -g codecov
 
-after_success:
-  - codecov --disable=gcov
+script:
+  - jest --ci --coverage
+  - codecov
