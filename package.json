@@ -1,6 +1,6 @@
 {
   "name": "use-http-service",
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Minimal React hook that wraps a fetch request to a JSON HTTP service.",
   "homepage": "https://github.com/marinoandrea/use-http-service#readme",
   "keywords": [
