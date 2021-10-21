@@ -31,11 +31,13 @@ export default function useHttpService<T, U, V>(
       out = {
         isOk: true,
         data: await handleResponse(res),
+        ...res,
       };
     } catch (e) {
       out = {
         isOk: false,
-        error: await handleError(e),
+        error: await handleError(e as Error),
+        ...res,
       };
     } finally {
       cleanup();
@@ -184,7 +186,7 @@ type PartialRequestState<T, U> = {
   data?: T;
 };
 
-export type Result<T, E> = SuccessResult<T> | ErrorResult<E>;
+export type Result<T, E> = (SuccessResult<T> | ErrorResult<E>) & Response;
 
 export type SuccessResult<T> = {
   isOk: true;
