@@ -1,6 +1,6 @@
 {
   "name": "use-http-service",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "description": "Minimal React hook that wraps a fetch request to a JSON HTTP service.",
   "homepage": "https://github.com/marinoandrea/use-http-service#readme",
   "keywords": [
@@ -10,8 +10,8 @@
     "react-hook",
     "fetch"
   ],
-  "main": "dist/src/index.js",
-  "types": "dist/src/index.d.ts",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
   "files": [
     "dist",
     "LICENSE",
@@ -21,13 +21,13 @@
     "dev": "tsc -w",
     "build": "tsc",
     "prepublish": "tsc",
-    "test": "jest"
+    "test": "jest --ci --coverage"
   },
   "author": {
     "name": "Andrea Marino",
     "email": "am.marinoandrea@gmail.com"
   },
-  "license": "ISC",
+  "license": "MIT",
   "peerDependencies": {
     "react": ">=16.8.0"
   },

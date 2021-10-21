@@ -1,3 +1,11 @@
 language: node_js
+
 node_js:
   - node
+
+before_install:
+  - npm install -g codecov
+
+script:
+  - jest --ci --coverage
+  - codecov
