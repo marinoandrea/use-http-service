@@ -17,7 +17,7 @@ type FailureResponse = {
   errorMsg: string;
 };
 
-const SERVER_PORT = 3000;
+const SERVER_PORT = process.env.JEST_MOCK_SERVER_PORT || 3002;
 const API_ENDPOINT = `http://localhost:${SERVER_PORT}`;
 const TIMER_PERIOD = 200;
 
@@ -91,7 +91,7 @@ test("Request returns SuccessResult when HTTP code indicates success", async () 
 
   await act(async () => {
     const data = await getData();
-    expect(data).toStrictEqual({ isOk: true, data: { msg: "success!" } });
+    expect(data).toMatchObject({ isOk: true, data: { msg: "success!" } });
   });
 });
 
@@ -108,7 +108,7 @@ test("Request returns ErrorResult when HTTP code indicates failure", async () =>
 
   await act(async () => {
     const error = await getData();
-    expect(error).toStrictEqual({ isOk: false, error: { errorMsg: "error!" } });
+    expect(error).toMatchObject({ isOk: false, error: { errorMsg: "error!" } });
   });
 });
 
