@@ -9,19 +9,24 @@ import React from "react";
  * @returns Array containing an object that tracks the request state [0] and the function that wraps the fetch call [1]
  */
 export default function useHttpService<T, U, V>(
-  service: Service
-): [RequestState<U, V>, (requestBody?: T) => Promise<Result<U, V>>] {
+  serviceInfo: Service
+): [
+  RequestState<U, V> & { service: Service } & {
+    setService: (s: Service) => void;
+  },
+  (requestBody?: T) => Promise<Result<U, V>>
+] {
   const [requestState, setRequestState] = useRequestState<U, V>();
-  const { url, ...serviceInfo } = service;
+  const [service, setService] = React.useState<Service>(serviceInfo);
 
   async function callService(requestBody?: T): Promise<Result<U, V>> {
     init();
 
-    const headers = buildHeaders(serviceInfo.headers);
+    const headers = buildHeaders(service.headers);
     const body = buildBody(requestBody);
 
-    const res = await fetch(url, {
-      ...serviceInfo,
+    const res = await fetch(service.url, {
+      ...service,
       headers,
       body,
     });
@@ -46,7 +51,7 @@ export default function useHttpService<T, U, V>(
     return out;
   }
 
-  return [requestState, callService];
+  return [{ ...requestState, service, setService }, callService];
 
   function init(): void {
     setRequestState({ isPending: true });
