@@ -33,6 +33,10 @@ function initServer() {
 
   app.get("/example", (_, res) => res.send({ msg: "success!" }));
 
+  app.get("/example-a", (_, res) => res.send({ msg: "success A!" }));
+
+  app.get("/example-b", (_, res) => res.send({ msg: "success B!" }));
+
   app.get("/not-authorized-endpoint", (_, res) =>
     res.status(401).send({ errorMsg: "error!" })
   );
@@ -206,3 +210,23 @@ const TestComponent: React.FC<{ failure?: boolean }> = ({
     </>
   );
 };
+
+test("Hook allows to change url after initialization.", async () => {
+  const { result } = renderHook(() =>
+    useHttpService<undefined, SuccessResponse, FailureResponse>({
+      url: `${API_ENDPOINT}/example-a`,
+    })
+  );
+
+  expect.hasAssertions();
+
+  await act(async () => {
+    let res = await result.current[1]();
+    expect(res).toMatchObject({ isOk: true, data: { msg: "success A!" } });
+    act(() =>
+      result.current[0].setService({ url: `${API_ENDPOINT}/example-b` })
+    );
+    res = await result.current[1]();
+    expect(res).toMatchObject({ isOk: true, data: { msg: "success B!" } });
+  });
+});
